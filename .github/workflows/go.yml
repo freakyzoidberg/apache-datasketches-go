@@ -20,13 +20,18 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Install gcc-multilib
+      run: |
+        sudo apt update
+        sudo apt install gcc-multilib -y
+
     - name: Set up Go ${{ matrix.go-version }}
       uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go-version }}
         architecture: ${{ matrix.architecture }}
     - name: Build
-      run: GOARCH=${{matrix.architecture}} go build -v ./...
+      run: go build -v ./...
 
     - name: Test
-      run: GOARCH=${{matrix.architecture}} go test -v ./...
+      run: go test -v ./...
