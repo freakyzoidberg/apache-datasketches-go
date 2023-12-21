@@ -21,7 +21,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/apache/datasketches-go/common"
+	"github.com/apache/datasketches-go/internal"
+	"github.com/apache/datasketches-go/pkg/common"
 	"math/bits"
 	"strconv"
 	"strings"
@@ -85,7 +86,7 @@ func NewLongsSketch(lgMaxMapSize int, lgCurMapSize int) (*LongsSketch, error) {
 // 0.75 times * maxMapSize. Both the ultimate accuracy and size of this sketch are a
 // function of maxMapSize.
 func NewLongsSketchWithMaxMapSize(maxMapSize int) (*LongsSketch, error) {
-	log2OfInt, err := common.ExactLog2(maxMapSize)
+	log2OfInt, err := internal.ExactLog2(maxMapSize)
 	if err != nil {
 		return nil, fmt.Errorf("maxMapSize, %e", err)
 	}
@@ -275,7 +276,7 @@ func (s *LongsSketch) GetCurrentMapCapacity() int {
 //
 // maxMapSize is the planned map size to be used when constructing this sketch.
 func GetEpsilonLongsSketch(maxMapSize int) (float64, error) {
-	if !common.IsPowerOf2(maxMapSize) {
+	if !internal.IsPowerOf2(maxMapSize) {
 		return 0, errors.New("maxMapSize is not a power of 2")
 	}
 	return 3.5 / float64(maxMapSize), nil

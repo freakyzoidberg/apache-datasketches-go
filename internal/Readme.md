@@ -1,0 +1,1 @@
+This package contains functions and variables that are visible to all package of the lib but not externally

@@ -2,7 +2,7 @@ package frequencies
 
 import (
 	"fmt"
-	"github.com/apache/datasketches-go/common"
+	"github.com/apache/datasketches-go/internal"
 )
 
 type ItemsSketch[C any] struct {
@@ -60,7 +60,7 @@ func NewItemsSketch[C any](lgMaxMapSize int, lgCurMapSize int) (*ItemsSketch[C],
 // 0.75 times * maxMapSize. Both the ultimate accuracy and size of this sketch are a
 // function of maxMapSize.
 func NewItemsSketchWithMaxMapSize[C any](maxMapSize int) (*ItemsSketch[C], error) {
-	log2OfInt, err := common.ExactLog2(maxMapSize)
+	log2OfInt, err := internal.ExactLog2(maxMapSize)
 	if err != nil {
 		return nil, fmt.Errorf("maxMapSize, %e", err)
 	}

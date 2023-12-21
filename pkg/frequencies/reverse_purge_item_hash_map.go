@@ -2,7 +2,7 @@ package frequencies
 
 import (
 	"fmt"
-	"github.com/apache/datasketches-go/common"
+	"github.com/apache/datasketches-go/internal"
 )
 
 type reversePurgeItemHashMap[C any] struct {
@@ -20,7 +20,7 @@ type reversePurgeItemHashMap[C any] struct {
 // The member loadThreshold is then set to the largest value that
 // will not overload the hash table.
 func newReversePurgeItemHashMap[C any](mapSize int) (*reversePurgeItemHashMap[C], error) {
-	lgLength, err := common.ExactLog2(mapSize)
+	lgLength, err := internal.ExactLog2(mapSize)
 	if err != nil {
 		return nil, fmt.Errorf("mapSize: %e", err)
 	}

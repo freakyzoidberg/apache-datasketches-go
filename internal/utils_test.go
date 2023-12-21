@@ -15,8 +15,14 @@
  * limitations under the License.
  */
 
-package thetacommon
+package internal
 
-const (
-	DEFAULT_UPDATE_SEED = uint64(9001)
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
+
+func TestInvPow2(t *testing.T) {
+	_, err := InvPow2(0)
+	assert.NoError(t, err)
+}
