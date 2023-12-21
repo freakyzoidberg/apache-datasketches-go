@@ -31,7 +31,7 @@ func TestHashMapSerial(t *testing.T) {
 	mp.adjustOrPutValue(2, 3)
 	strMp := mp.serializeToString()
 
-	newMp, err := deserializeReversePurgeLongHashMapFromString(strMp)
+	newMp, err := deserializeRevPurgeLongHashMapFromString(strMp)
 	assert.NoError(t, err)
 	newStrMp := newMp.serializeToString()
 	assert.Equal(t, strMp, newStrMp)

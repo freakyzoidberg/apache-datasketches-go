@@ -48,18 +48,6 @@ const (
 	strPreambleTokens = 6
 )
 
-/**
- * Construct this sketch with parameter lgMapMapSize and lgCurMapSize. This internal
- * constructor is used when deserializing the sketch.
- *
- * @param lgMaxMapSize Log2 of the physical size of the internal hash map managed by this
- * sketch. The maximum capacity of this internal hash map is 0.75 times 2^lgMaxMapSize.
- * Both the ultimate accuracy and size of this sketch are a function of lgMaxMapSize.
- *
- * @param lgCurMapSize Log2 of the starting (current) physical size of the internal hash
- * map managed by this sketch.
- */
-
 // NewLongsSketch returns a new LongsSketch with the given lgMaxMapSize and lgCurMapSize.
 //
 // lgMaxMapSize is the log2 of the physical size of the internal hash map managed by this
@@ -257,7 +245,7 @@ func NewLongsSketchFromString(str string) (*LongsSketch, error) {
 	}
 	sk.streamWeight = streamWt
 	sk.offset = offset
-	sk.hashMap, err = deserializeFromStringArray(tokens)
+	sk.hashMap, err = deserializeRevPurgeLongHashMapFromStringArray(tokens)
 	if err != nil {
 		return nil, err
 	}

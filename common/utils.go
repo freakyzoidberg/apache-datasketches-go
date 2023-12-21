@@ -28,6 +28,16 @@ const (
 	InverseGolden = float64(0.6180339887498949025)
 )
 
+// GetShortLE gets a short value from a byte array in little endian format.
+func GetShortLE(array []byte, offset int) int {
+	return int(array[offset]&0xFF) | (int(array[offset+1]&0xFF) << 8)
+}
+
+// PutShortLE puts a short value into a byte array in little endian format.
+func PutShortLE(array []byte, offset int, value int) {
+	array[offset] = byte(value)
+	array[offset+1] = byte(value >> 8)
+}
 
 // InvPow2 returns 2^(-e).
 func InvPow2(e int) (float64, error) {

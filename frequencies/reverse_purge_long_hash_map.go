@@ -242,7 +242,7 @@ func (r *reversePurgeLongHashMap) hashDelete(deleteProbe int) error {
 	return nil
 }
 
-func deserializeReversePurgeLongHashMapFromString(string string) (*reversePurgeLongHashMap, error) {
+func deserializeRevPurgeLongHashMapFromString(string string) (*reversePurgeLongHashMap, error) {
 	tokens := strings.Split(string, ",")
 	if len(tokens) < 2 {
 		return nil, errors.New("len(tokens) < 2")
@@ -278,7 +278,7 @@ func deserializeReversePurgeLongHashMapFromString(string string) (*reversePurgeL
 	return table, nil
 }
 
-func deserializeFromStringArray(tokens []string) (*reversePurgeLongHashMap, error) {
+func deserializeRevPurgeLongHashMapFromStringArray(tokens []string) (*reversePurgeLongHashMap, error) {
 	ignore := strPreambleTokens
 	numActive, _ := strconv.ParseUint(tokens[ignore], 10, 32)
 	length, _ := strconv.ParseUint(tokens[ignore+1], 10, 32)
