@@ -17,4 +17,4 @@
 
 pushd "$(dirname ${BASH_SOURCE:0})"
 trap popd EXIT
-docker build  -t go-tester -f ./Dockerfile ../ && docker run -t go-tester
+docker build  -t datasketch-go-tester -f ./Dockerfile ../ && docker run -t datasketch-go-tester
