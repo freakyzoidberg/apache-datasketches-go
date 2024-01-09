@@ -20,6 +20,7 @@ package kll
 import (
 	"errors"
 	"math"
+	"math/rand"
 )
 
 type DoubleSketch struct {
@@ -88,12 +89,16 @@ func (k *DoubleSketch) Update(value float64) error {
 	return err
 }
 
-func (k *DoubleSketch) getN() int64 {
+func (k *DoubleSketch) GetNumRetained() int {
+	return k.levelsArr[k.getNumLevels()] - k.levelsArr[0]
+}
+
+func (k *DoubleSketch) GetN() int64 {
 	return k.n
 }
 
-func (k *DoubleSketch) isEmpty() bool {
-	return k.getN() == 0
+func (k *DoubleSketch) IsEmpty() bool {
+	return k.GetN() == 0
 }
 
 func (k *DoubleSketch) setMinItem(item float64) {
@@ -135,6 +140,26 @@ func (k *DoubleSketch) getNumLevels() int {
 	return 1
 }
 
+func (k *DoubleSketch) getDoubleItemsArray() []float64 {
+	return k.doubleItems
+}
+
+func (k *DoubleSketch) setDoubleItemsArray(doubleItems []float64) {
+	k.doubleItems = doubleItems
+}
+
+func (k *DoubleSketch) setNumLevels(numLevels int) {
+	// no-op
+}
+
+func (k *DoubleSketch) setLevelsArray(levelsArr []int) error {
+	if k.readOnly {
+		return errors.New("Target sketch is Read Only, cannot write. ")
+	}
+	k.levelsArr = levelsArr
+	return nil
+}
+
 func (k *DoubleSketch) getLevelsArray(structure sketchStructure) []int {
 	if structure == sketchStructureEnum.updatable {
 		res := make([]int, 0, len(k.levelsArr))
@@ -155,7 +180,7 @@ func updateDouble(dblSk *DoubleSketch, item float64) error {
 	if math.IsNaN(item) {
 		return nil
 	}
-	if dblSk.isEmpty() {
+	if dblSk.IsEmpty() {
 		dblSk.setMinItem(item)
 		dblSk.setMaxItem(item)
 	} else {
@@ -200,7 +225,7 @@ func (k *DoubleSketch) compressWhileUpdatingSketch() error {
 	// +2 is OK because we already added a new top level if necessary
 	popAbove := myLevelsArr[level+2] - rawEnd
 	rawPop := rawEnd - rawBeg
-	oddPop := isOdd(rawPop)
+	oddPop := (rawPop & 1) == 1 // isOdd
 	adjBeg := rawBeg
 	adjPop := rawPop
 	if oddPop {
@@ -212,6 +237,7 @@ func (k *DoubleSketch) compressWhileUpdatingSketch() error {
 	//the following is specific to Doubles
 	myDoubleItemsArr := k.doubleItems
 	if level == 0 { // level zero might not be sorted, so we must sort it if we wish to compact it
+		panic("implement me")
 		// Arrays.sort(myDoubleItemsArr, adjBeg, adjBeg + adjPop);
 	}
 	if popAbove == 0 {
@@ -251,8 +277,6 @@ func (k *DoubleSketch) compressWhileUpdatingSketch() error {
 }
 
 func (k *DoubleSketch) addEmptyTopLevelToCompletelyFullSketch() error {
-	sketchType := k.sketchType
-
 	myCurLevelsArr := k.getLevelsArray(sketchStructureEnum.updatable)
 	myCurNumLevels := k.getNumLevels()
 	myCurTotalItemsCapacity := myCurLevelsArr[myCurNumLevels]
@@ -317,4 +341,54 @@ func (k *DoubleSketch) addEmptyTopLevelToCompletelyFullSketch() error {
 	k.setDoubleItemsArray(myNewDoubleItemsArr)
 
 	return nil
+}
+
+func randomlyHalveUpDoubles(buf []float64, start int, length int) {
+	halfLength := length / 2
+	offset := rand.Intn(2) // disable for validation
+	j := (start + length) - 1 - offset
+	for i := (start + length) - 1; i >= (start + halfLength); i-- {
+		buf[i] = buf[j]
+		j -= 2
+	}
+}
+
+func randomlyHalveDownDoubles(buf []float64, start int, length int) {
+	halfLength := length / 2
+	offset := rand.Intn(2) // disable for validation
+	j := start + offset
+	for i := start; i < (start + halfLength); i++ {
+		buf[i] = buf[j]
+		j += 2
+	}
+}
+
+func mergeSortedDoubleArrays(
+	bufA []float64, startA int, lenA int,
+	bufB []float64, startB int, lenB int,
+	bufC []float64, startC int,
+) {
+	lenC := lenA + lenB
+	limA := startA + lenA
+	limB := startB + lenB
+	limC := startC + lenC
+
+	a := startA
+	b := startB
+
+	for c := startC; c < limC; c++ {
+		if a == limA {
+			bufC[c] = bufB[b]
+			b++
+		} else if b == limB {
+			bufC[c] = bufA[a]
+			a++
+		} else if bufA[a] < bufB[b] {
+			bufC[c] = bufA[a]
+			a++
+		} else {
+			bufC[c] = bufB[b]
+			b++
+		}
+	}
 }

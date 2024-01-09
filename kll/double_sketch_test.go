@@ -1,6 +1,7 @@
 package kll
 
 import (
+	"github.com/stretchr/testify/assert"
 	"math"
 	"testing"
 )
@@ -27,5 +28,9 @@ import (
 
 func TestDoubleSketchEmpty(t *testing.T) {
 	sketch := NewKllDoubleSketchWithDefault()
-	sketch.Update(math.NaN()) // this must not change anything
+	err := sketch.Update(math.NaN()) // this must not change anything
+	assert.NoError(t, err)
+	assert.True(t, sketch.IsEmpty())
+	assert.Equal(t, sketch.GetN(), int64(0))
+	assert.Equal(t, sketch.GetNumRetained(), 0)
 }

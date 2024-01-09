@@ -21,4 +21,6 @@ const (
 	_SERIAL_VERSION_EMPTY_FULL = 1 // Empty or full preamble, NOT single item format, NOT updatable
 	_SERIAL_VERSION_UPDATABLE  = 3 // PreInts=5, Full preamble + LevelsArr + min, max + empty space
 	_PREAMBLE_INTS_FULL        = 5 // Full preamble, not empty nor single item.
+
+	_DATA_START_ADR = 20 // Full Sketch, not single item
 )
