@@ -33,4 +33,10 @@ func TestDoubleSketchEmpty(t *testing.T) {
 	assert.True(t, sketch.IsEmpty())
 	assert.Equal(t, sketch.GetN(), int64(0))
 	assert.Equal(t, sketch.GetNumRetained(), 0)
+	_, err = sketch.GetRank(0)
+	assert.Error(t, err)
+	_, err = sketch.GetMinItem()
+	assert.Error(t, err)
+	_, err = sketch.GetMaxItem()
+	assert.Error(t, err)
 }

@@ -23,6 +23,13 @@ import (
 	"math/rand"
 )
 
+type KllSearchCriteria int
+
+const (
+	KLL_INCLUSIVE KllSearchCriteria = iota
+	KLL_EXCLUSIVE
+)
+
 type DoubleSketch struct {
 	sketchType
 	sketchStructure
@@ -89,6 +96,22 @@ func (k *DoubleSketch) Update(value float64) error {
 	return err
 }
 
+func (k *DoubleSketch) GetRank(quantile float64) (float64, error) {
+	return k.GetRankWithMode(quantile, KLL_INCLUSIVE)
+}
+
+func (k *DoubleSketch) GetRankWithMode(quantile float64, mode KllSearchCriteria) (float64, error) {
+	/*
+	   	    if (isEmpty()) { throw new SketchesArgumentException(EMPTY_MSG); }
+	          refreshSortedView();
+	          return kllDoublesSV.getRank(quantile, searchCrit);
+	*/
+	if k.IsEmpty() {
+		return 0, errors.New("empty sketch")
+	}
+	panic("implement me")
+}
+
 func (k *DoubleSketch) GetNumRetained() int {
 	return k.levelsArr[k.getNumLevels()] - k.levelsArr[0]
 }
@@ -109,12 +132,18 @@ func (k *DoubleSketch) setMaxItem(item float64) {
 	k.maxDoubleItem = item
 }
 
-func (k *DoubleSketch) getMinItem() float64 {
-	return k.minDoubleItem
+func (k *DoubleSketch) GetMinItem() (float64, error) {
+	if k.IsEmpty() {
+		return 0, errors.New("empty sketch")
+	}
+	return k.minDoubleItem, nil
 }
 
-func (k *DoubleSketch) getMaxItem() float64 {
-	return k.maxDoubleItem
+func (k *DoubleSketch) GetMaxItem() (float64, error) {
+	if k.IsEmpty() {
+		return 0, errors.New("empty sketch")
+	}
+	return k.maxDoubleItem, nil
 }
 
 func (k *DoubleSketch) incN() {
@@ -184,8 +213,17 @@ func updateDouble(dblSk *DoubleSketch, item float64) error {
 		dblSk.setMinItem(item)
 		dblSk.setMaxItem(item)
 	} else {
-		dblSk.setMinItem(math.Min(dblSk.getMinItem(), item))
-		dblSk.setMaxItem(math.Max(dblSk.getMaxItem(), item))
+		mi, err := dblSk.GetMinItem()
+		if err != nil {
+			return err
+		}
+		dblSk.setMinItem(math.Min(mi, item))
+
+		ma, err := dblSk.GetMinItem()
+		if err != nil {
+			return err
+		}
+		dblSk.setMaxItem(math.Max(ma, item))
 	}
 	level0space := dblSk.levelsArr[0]
 	if level0space == 0 {
@@ -281,18 +319,28 @@ func (k *DoubleSketch) addEmptyTopLevelToCompletelyFullSketch() error {
 	myCurNumLevels := k.getNumLevels()
 	myCurTotalItemsCapacity := myCurLevelsArr[myCurNumLevels]
 
-	var myNewNumLevels int
-	var myNewLevelsArr []int
-	var myNewTotalItemsCapacity int
+	var (
+		err                     error
+		myNewNumLevels          int
+		myNewLevelsArr          []int
+		myNewTotalItemsCapacity int
 
-	var myCurDoubleItemsArr []float64
-	var myNewDoubleItemsArr []float64
-	var minDouble = math.NaN()
-	var maxDouble = math.NaN()
+		myCurDoubleItemsArr []float64
+		myNewDoubleItemsArr []float64
+		minDouble           = math.NaN()
+		maxDouble           = math.NaN()
+	)
 
 	myCurDoubleItemsArr = k.getDoubleItemsArray()
-	minDouble = k.getMinItem()
-	maxDouble = k.getMaxItem()
+	minDouble, err = k.GetMinItem()
+	if err != nil {
+		return err
+	}
+	maxDouble, err = k.GetMaxItem()
+	if err != nil {
+		return err
+	}
+
 	//assert we are following a certain growth scheme
 	if len(myCurDoubleItemsArr) != myCurTotalItemsCapacity {
 		return errors.New("assert we are following a certain growth scheme")
