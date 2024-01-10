@@ -39,4 +39,12 @@ func TestDoubleSketchEmpty(t *testing.T) {
 	assert.Error(t, err)
 	_, err = sketch.GetMaxItem()
 	assert.Error(t, err)
+	_, err = sketch.GetQuantile(0.5)
+	assert.Error(t, err)
+	_, err = sketch.GetQuantiles([]float64{0})
+	assert.Error(t, err)
+	_, err = sketch.GetPMF([]float64{0})
+	assert.Error(t, err)
+	_, err = sketch.GetCDF([]float64{0})
+	assert.Error(t, err)
 }

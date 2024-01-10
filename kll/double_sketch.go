@@ -33,8 +33,10 @@ const (
 type DoubleSketch struct {
 	sketchType
 	sketchStructure
-	readOnly  bool
-	levelsArr []int //Always writable form
+
+	kllDoublesSV *doubleSketchSortedView
+	readOnly     bool
+	levelsArr    []int //Always writable form
 
 	k                 int   // configured size of K.
 	m                 int   // configured size of M.
@@ -144,6 +146,86 @@ func (k *DoubleSketch) GetMaxItem() (float64, error) {
 		return 0, errors.New("empty sketch")
 	}
 	return k.maxDoubleItem, nil
+}
+
+func (k *DoubleSketch) GetQuantile(rank float64) (float64, error) {
+	return k.GetQuantileWithCriteria(rank, KLL_INCLUSIVE)
+}
+
+func (k *DoubleSketch) GetQuantileWithCriteria(rank float64, criteria KllSearchCriteria) (float64, error) {
+	if k.IsEmpty() {
+		return 0, errors.New("empty sketch")
+	}
+	if err := k.refreshSortedView(); err != nil {
+		return 0, err
+	}
+	k.kllDoublesSV.getQuantile(rank, criteria)
+	return 0, nil
+}
+
+func (k *DoubleSketch) GetQuantiles(rank []float64) ([]float64, error) {
+	return k.GetQuantilesWithCriteria(rank, KLL_INCLUSIVE)
+}
+
+func (k *DoubleSketch) GetQuantilesWithCriteria(rank []float64, criteria KllSearchCriteria) ([]float64, error) {
+	if k.IsEmpty() {
+		return []float64{}, errors.New("empty sketch")
+	}
+	if err := k.refreshSortedView(); err != nil {
+		return []float64{}, err
+	}
+	var (
+		leng = len(rank)
+		err  error
+	)
+	quantiles := make([]float64, leng)
+	for i := 0; i < leng; i++ {
+		quantiles[i], err = k.kllDoublesSV.getQuantile(rank[i], criteria)
+		if err != nil {
+			return []float64{}, err
+		}
+	}
+	return quantiles, nil
+}
+
+func (k *DoubleSketch) GetPMF(rank []float64) ([]float64, error) {
+	return k.GetPMFCriteria(rank, KLL_INCLUSIVE)
+}
+
+func (k *DoubleSketch) GetPMFCriteria(rank []float64, criteria KllSearchCriteria) ([]float64, error) {
+	if k.IsEmpty() {
+		return []float64{}, errors.New("empty sketch")
+	}
+	if err := k.refreshSortedView(); err != nil {
+		return []float64{}, err
+	}
+	return k.kllDoublesSV.getPMF(rank, criteria)
+}
+
+func (k *DoubleSketch) GetCDF(rank []float64) ([]float64, error) {
+	return k.GetCDFCriteria(rank, KLL_INCLUSIVE)
+}
+
+func (k *DoubleSketch) GetCDFCriteria(rank []float64, criteria KllSearchCriteria) ([]float64, error) {
+	if k.IsEmpty() {
+		return []float64{}, errors.New("empty sketch")
+	}
+	if err := k.refreshSortedView(); err != nil {
+		return []float64{}, err
+	}
+	return k.kllDoublesSV.getCDF(rank, criteria)
+}
+
+func (k *DoubleSketch) refreshSortedView() error {
+	var err error
+	if k.kllDoublesSV == nil {
+		k.kllDoublesSV, err = newDoubleSketchSortedViewFromSketch(k)
+	}
+	return err
+}
+
+func (k *DoubleSketch) IsLevelZeroSorted() bool {
+	return k.isLevelZeroSorted
 }
 
 func (k *DoubleSketch) incN() {

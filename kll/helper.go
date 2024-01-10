@@ -35,6 +35,26 @@ func checkM(m int) error {
 	return nil
 }
 
+func checkNormalizedRankBounds(nRank float64) error {
+	if nRank < 0.0 || nRank > 1.0 {
+		return fmt.Errorf("A normalized rank must be >= 0 and <= 1.0: %f", nRank)
+	}
+	return nil
+}
+
+func checkDoublesSplitPointsOrder(values []float64) error {
+	if len(values) == 1 && values[0] != values[0] {
+		return errors.New("Values must be unique, monotonically increasing and not NaN.")
+	}
+	for j := 0; j < len(values)-1; j++ {
+		if values[j] < values[j+1] {
+			continue
+		}
+		return errors.New("Values must be unique, monotonically increasing and not NaN.")
+	}
+	return nil
+}
+
 func findLevelToCompact(k int, m int, numLevels int, levels []int) (int, error) {
 	level := 0
 	for {
@@ -92,4 +112,14 @@ func intCapAuxAux(k int64, depth int) (int64, error) {
 		return 0, errors.New("result > k")
 	}
 	return result, nil
+}
+
+func convertToCumulative(array []int64) ([]int64, int64) {
+	subtotal := int64(0)
+	for i := 0; i < len(array); i++ {
+		newSubtotal := subtotal + array[i]
+		subtotal = array[i]
+		array[i] = newSubtotal
+	}
+	return array, subtotal
 }
