@@ -47,4 +47,5 @@ func TestDoubleSketchEmpty(t *testing.T) {
 	assert.Error(t, err)
 	_, err = sketch.GetCDF([]float64{0})
 	assert.Error(t, err)
+	assert.NotNil(t, sketch.String(true, true))
 }

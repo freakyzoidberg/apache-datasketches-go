@@ -3,6 +3,7 @@ package kll
 import (
 	"errors"
 	"fmt"
+	"math"
 )
 
 const (
@@ -11,6 +12,13 @@ const (
 	_MAX_K     = (1 << 16) - 1
 	_MAX_M     = 8 //The maximum M
 	_MIN_M     = 2 // The minimum M
+)
+
+const (
+	_PMF_COEF = 2.446
+	_PMF_EXP  = 0.9433
+	_CDF_COEF = 2.296
+	_CDF_EXP  = 0.9723
 )
 
 var (
@@ -53,6 +61,63 @@ func checkDoublesSplitPointsOrder(values []float64) error {
 		return errors.New("Values must be unique, monotonically increasing and not NaN.")
 	}
 	return nil
+}
+
+func getNormalizedRankError(minK int, pmf bool) float64 {
+	if pmf {
+		return _PMF_COEF / math.Pow(float64(minK), _PMF_EXP)
+	}
+	return _CDF_COEF / math.Pow(float64(minK), _CDF_EXP)
+}
+
+func toStringImpl(sketch *DoubleSketch, withSummary, withData bool) string {
+	k := sketch.GetK()
+	m := sketch.GetM()
+	n := sketch.GetN()
+	numLevels := sketch.getNumLevels()
+	fullLevelsArr := sketch.getLevelsArray(sketchStructureEnum.updatable)
+	epsPct := fmt.Sprintf("%.3f%%", sketch.GetNormalizedRankError(false)*100)
+	epsPMFPct := fmt.Sprintf("%.3f%%", sketch.GetNormalizedRankError(true)*100)
+
+	sb := ""
+	sb += fmt.Sprintf("### KllDoubleSketch Summary:\n")
+	sb += fmt.Sprintf("   K                      : %d\n", k)
+	sb += fmt.Sprintf("   Dynamic min K          : %d\n", sketch.GetMinK())
+	sb += fmt.Sprintf("   M                      : %d\n", m)
+	sb += fmt.Sprintf("   N                      : %d\n", n)
+	sb += fmt.Sprintf("   Epsilon                : %s\n", epsPct)
+	sb += fmt.Sprintf("   Epsilon PMF            : %s\n", epsPMFPct)
+	sb += fmt.Sprintf("   Empty                  : %t\n", sketch.IsEmpty())
+	sb += fmt.Sprintf("   Estimation Mode        : %t\n", sketch.isEstimationMode())
+	sb += fmt.Sprintf("   Levels                 : %d\n", numLevels)
+	sb += fmt.Sprintf("   Level 0 Sorted         : %t\n", sketch.IsLevelZeroSorted())
+	sb += fmt.Sprintf("   Capacity Items         : %d\n", fullLevelsArr[numLevels])
+	sb += fmt.Sprintf("   Retained Items         : %d\n", sketch.GetNumRetained())
+	sb += fmt.Sprintf("   Empty/Garbage Items    : %d\n", sketch.levelsArr[0])
+	sb += fmt.Sprintf("   ReadOnly               : false\n")
+	//sb += fmt.Sprintf("   Updatable Storage Bytes: %d\n", sketch.CurrentSerializedSizeBytes(true))
+	//sb += fmt.Sprintf("   Compact Storage Bytes  : %d\n", sketch.CurrentSerializedSizeBytes(false))
+
+	if sketch.IsEmpty() {
+		emptyStr := "NaN"
+		sb += fmt.Sprintf("   Min Item               : %s\n", emptyStr)
+		sb += fmt.Sprintf("   Max Item               : %s\n", emptyStr)
+	} else {
+		minItem, _ := sketch.GetMinItem()
+		sb += fmt.Sprintf("   Min Item               : %f\n", minItem)
+		maxItem, _ := sketch.GetMaxItem()
+		sb += fmt.Sprintf("   Max Item               : %f\n", maxItem)
+	}
+
+	sb += fmt.Sprintf("### End sketch summary\n")
+
+	if !withSummary {
+		sb = ""
+	}
+	//if withData {
+	//	sb += outputData(sketch)
+	//}
+	return sb
 }
 
 func findLevelToCompact(k int, m int, numLevels int, levels []int) (int, error) {

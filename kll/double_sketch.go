@@ -118,6 +118,14 @@ func (k *DoubleSketch) GetNumRetained() int {
 	return k.levelsArr[k.getNumLevels()] - k.levelsArr[0]
 }
 
+func (k *DoubleSketch) GetK() int {
+	return k.k
+}
+
+func (k *DoubleSketch) GetM() int {
+	return k.m
+}
+
 func (k *DoubleSketch) GetN() int64 {
 	return k.n
 }
@@ -134,6 +142,10 @@ func (k *DoubleSketch) setMaxItem(item float64) {
 	k.maxDoubleItem = item
 }
 
+func (k *DoubleSketch) GetMinK() int {
+	return k.minK
+}
+
 func (k *DoubleSketch) GetMinItem() (float64, error) {
 	if k.IsEmpty() {
 		return 0, errors.New("empty sketch")
@@ -146,6 +158,14 @@ func (k *DoubleSketch) GetMaxItem() (float64, error) {
 		return 0, errors.New("empty sketch")
 	}
 	return k.maxDoubleItem, nil
+}
+
+func (k *DoubleSketch) GetNormalizedRankError(pmf bool) float64 {
+	return k.GetNormalizedRankErrorWithCriteria(k.GetMinK(), pmf)
+}
+
+func (k *DoubleSketch) GetNormalizedRankErrorWithCriteria(minK int, pmf bool) float64 {
+	return getNormalizedRankError(minK, pmf)
 }
 
 func (k *DoubleSketch) GetQuantile(rank float64) (float64, error) {
@@ -273,11 +293,11 @@ func (k *DoubleSketch) setLevelsArray(levelsArr []int) error {
 
 func (k *DoubleSketch) getLevelsArray(structure sketchStructure) []int {
 	if structure == sketchStructureEnum.updatable {
-		res := make([]int, 0, len(k.levelsArr))
+		res := make([]int, len(k.levelsArr))
 		copy(res, k.levelsArr)
 		return res
 	} else if structure == sketchStructureEnum.compactFull {
-		res := make([]int, 0, len(k.levelsArr))
+		res := make([]int, len(k.levelsArr))
 		for i := 0; i < len(k.levelsArr)-1; i++ {
 			res[i] = k.levelsArr[i]
 		}
@@ -285,6 +305,10 @@ func (k *DoubleSketch) getLevelsArray(structure sketchStructure) []int {
 	} else {
 		return []int{}
 	}
+}
+
+func (k *DoubleSketch) isEstimationMode() bool {
+	return k.getNumLevels() > 1
 }
 
 func updateDouble(dblSk *DoubleSketch, item float64) error {
@@ -471,6 +495,17 @@ func (k *DoubleSketch) addEmptyTopLevelToCompletelyFullSketch() error {
 	k.setDoubleItemsArray(myNewDoubleItemsArr)
 
 	return nil
+}
+
+func (k *DoubleSketch) String(withSummary bool, withData bool) string {
+	/*
+	   if (withData && sketchStructure != UPDATABLE) {
+	     final Memory mem = getWritableMemory();
+	     assert mem != null;
+	     sketch = KllDoublesSketch.heapify(getWritableMemory());
+	   }
+	*/
+	return toStringImpl(k, withSummary, withData)
 }
 
 func randomlyHalveUpDoubles(buf []float64, start int, length int) {
