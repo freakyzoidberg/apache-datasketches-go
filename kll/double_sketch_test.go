@@ -49,3 +49,11 @@ func TestDoubleSketchEmpty(t *testing.T) {
 	assert.Error(t, err)
 	assert.NotNil(t, sketch.String(true, true))
 }
+
+func TestGetQuantilesInvalidArg(t *testing.T) {
+	sketch := NewKllDoubleSketchWithDefault()
+	err := sketch.Update(1)
+	assert.NoError(t, err)
+	_, err = sketch.GetQuantile(-1.0)
+	assert.Error(t, err)
+}

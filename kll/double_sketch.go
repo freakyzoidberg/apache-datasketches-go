@@ -179,8 +179,7 @@ func (k *DoubleSketch) GetQuantileWithCriteria(rank float64, criteria KllSearchC
 	if err := k.refreshSortedView(); err != nil {
 		return 0, err
 	}
-	k.kllDoublesSV.getQuantile(rank, criteria)
-	return 0, nil
+	return k.kllDoublesSV.getQuantile(rank, criteria)
 }
 
 func (k *DoubleSketch) GetQuantiles(rank []float64) ([]float64, error) {
